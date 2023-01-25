@@ -58,7 +58,7 @@ resource "aws_route_table_association" "my_public_assoc" {
 
 # security group
 
-resource "aws_security_group" "my_stg" {
+resource "aws_security_group" "my_sg" {
   name        = "dev-sg"
   description = "dev security group"
   vpc_id      = aws_vpc.my_vpc.id
@@ -68,6 +68,13 @@ resource "aws_security_group" "my_stg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+  from_port   = 8000
+  to_port     = 8000
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}
   egress {
     from_port   = 0
     to_port     = 0
@@ -79,6 +86,28 @@ resource "aws_security_group" "my_stg" {
 
 # key pair
 resource "aws_key_pair" "my_auth" {
-  key_name = "mykey"
+  key_name   = "mykey"
   public_key = file("~/.ssh/mykey.pub") // we can also copy and paste the public key
+}
+
+
+# ec2 instance
+resource "aws_instance" "dev_node" {
+  instance_type          = "t2.micro"
+  ami                    = data.aws_ami.server_ami.id
+  key_name               = aws_key_pair.my_auth.id # id and key name is same
+  vpc_security_group_ids = [aws_security_group.my_sg.id]
+  subnet_id              = aws_subnet.my_public_subnet.id
+
+  user_data = file("userdata.tpl") #installing docker
+
+
+  root_block_device {
+    volume_size = 10
+  }
+
+  tags = {
+    Name = "dev-node"
+  }
+
 }
