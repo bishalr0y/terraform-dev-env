@@ -75,3 +75,10 @@ resource "aws_security_group" "my_stg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+
+# key pair
+resource "aws_key_pair" "my_auth" {
+  key_name = "mykey"
+  public_key = file("~/.ssh/mykey.pub") // we can also copy and paste the public key
+}
